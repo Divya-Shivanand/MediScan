@@ -1,165 +1,106 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import toast from 'react-hot-toast';
 
-const SYMPTOMS = ['Chest Pain','Shortness of Breath','Cough','Fatigue','Headache','Fever','Nausea','Weight Loss','Dizziness','Joint Pain'];
-const HISTORY  = ['Diabetes','Hypertension','Heart Disease','Asthma','Cancer','Tuberculosis','Stroke','None'];
+const symptoms = ['Persistent cough', 'Shortness of breath', 'Wheezing', 'Chest pain', 'Fever', 'Night sweats', 'Fatigue', 'Blood in sputum', 'Rapid breathing', 'Loss of appetite'];
 
 export default function HealthForm() {
+  const [form, setForm] = useState({ age: '', gender: '', smokingStatus: 'never', duration: '', selectedSymptoms: [], otherNotes: '' });
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    age:'', gender:'', weight:'', height:'', bloodGroup:'',
-    symptoms:[], medicalHistory:[], currentMedications:'',
-    allergies:'', smokingStatus:'never', alcoholUsage:'never',
-    exerciseFrequency:'moderate', familyHistory:[], chiefComplaint:''
-  });
 
-  useEffect(() => {
-    api.get('/health').then(r => { if(r.data) setForm(prev => ({...prev, ...r.data})); }).catch(()=>{});
-  }, []);
-
-  const toggle = (field, val) =>
-    setForm(prev => ({
-      ...prev,
-      [field]: prev[field].includes(val)
-        ? prev[field].filter(x => x !== val)
-        : [...prev[field], val]
+  const toggleSymptom = (s) => {
+    setForm(f => ({
+      ...f,
+      selectedSymptoms: f.selectedSymptoms.includes(s) ? f.selectedSymptoms.filter(x => x !== s) : [...f.selectedSymptoms, s]
     }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await api.post('/health', form);
-      toast.success('Health profile saved!');
-      navigate('/xray');
-    } catch {
-      toast.error('Failed to save');
-    }
+      navigate('/upload');
+    } catch (err) {
+      alert('Failed to save health details. Please try again.');
+    } finally { setLoading(false); }
   };
 
+  const inputStyle = { width: '100%', padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: '8px', fontSize: '14px', outline: 'none', color: 'var(--text-dark)', background: 'white' };
+  const labelStyle = { display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--primary-darker)', marginBottom: '6px' };
+
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Health Profile</h1>
-        <p className="text-gray-500 mt-1">This information helps our AI provide accurate analysis</p>
-      </div>
+    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+      <h1 style={{ fontFamily: "'DM Serif Display'", fontSize: '1.8rem', color: 'var(--primary-darker)', marginBottom: '0.5rem' }}>Health Details</h1>
+      <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '2rem' }}>Help us understand your health background for accurate analysis.</p>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <section className="bg-white rounded-xl border border-gray-100 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Basic Information</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { label:'Age', key:'age', type:'number', placeholder:'25' },
-              { label:'Weight (kg)', key:'weight', type:'number', placeholder:'70' },
-              { label:'Height (cm)', key:'height', type:'number', placeholder:'170' },
-            ].map(({ label, key, type, placeholder }) => (
-              <div key={key}>
-                <label className="block text-sm text-gray-600 mb-1">{label}</label>
-                <input type={type} placeholder={placeholder}
-                  value={form[key]}
-                  onChange={e => setForm({...form, [key]: e.target.value})}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-              </div>
-            ))}
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Gender</label>
-              <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <option value="">Select</option>
-                {['Male','Female','Other'].map(g => <option key={g}>{g}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Blood Group</label>
-              <select value={form.bloodGroup} onChange={e => setForm({...form, bloodGroup: e.target.value})}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <option value="">Select</option>
-                {['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(g => <option key={g}>{g}</option>)}
-              </select>
-            </div>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>Age</label>
+            <input type="number" min="1" max="120" value={form.age} onChange={e => setForm({ ...form, age: e.target.value })} required style={inputStyle} placeholder="e.g. 35" />
           </div>
-        </section>
+          <div>
+            <label style={labelStyle}>Gender</label>
+            <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })} required style={inputStyle}>
+              <option value="">Select</option>
+              <option>Male</option><option>Female</option><option>Other</option>
+            </select>
+          </div>
+        </div>
 
-        <section className="bg-white rounded-xl border border-gray-100 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Current Symptoms</h2>
-          <div className="flex flex-wrap gap-2">
-            {SYMPTOMS.map(s => (
-              <button key={s} type="button"
-                onClick={() => toggle('symptoms', s)}
-                className={`px-3 py-1.5 rounded-full text-sm border transition ${
-                  form.symptoms.includes(s)
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'border-gray-200 text-gray-600 hover:border-blue-400'
-                }`}>
-                {s}
-              </button>
+        <div>
+          <label style={labelStyle}>Smoking Status</label>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {['never', 'former', 'current'].map(s => (
+              <button key={s} type="button" onClick={() => setForm({ ...form, smokingStatus: s })} style={{
+                flex: 1, padding: '9px', border: '1.5px solid', borderRadius: '8px', cursor: 'pointer',
+                fontWeight: '500', fontSize: '13px', textTransform: 'capitalize',
+                background: form.smokingStatus === s ? 'var(--primary)' : 'white',
+                borderColor: form.smokingStatus === s ? 'var(--primary)' : 'var(--border)',
+                color: form.smokingStatus === s ? 'white' : 'var(--text-muted)',
+              }}>{s}</button>
             ))}
           </div>
-          <textarea
-            className="w-full mt-4 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            rows={3}
-            placeholder="Describe your main complaint in detail..."
-            value={form.chiefComplaint}
-            onChange={e => setForm({...form, chiefComplaint: e.target.value})} />
-        </section>
+        </div>
 
-        <section className="bg-white rounded-xl border border-gray-100 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Medical History</h2>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {HISTORY.map(h => (
-              <button key={h} type="button"
-                onClick={() => toggle('medicalHistory', h)}
-                className={`px-3 py-1.5 rounded-full text-sm border transition ${
-                  form.medicalHistory.includes(h)
-                    ? 'bg-teal-600 text-white border-teal-600'
-                    : 'border-gray-200 text-gray-600 hover:border-teal-400'
-                }`}>
-                {h}
-              </button>
+        <div>
+          <label style={labelStyle}>Symptom Duration</label>
+          <select value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} required style={inputStyle}>
+            <option value="">Select duration</option>
+            <option>Less than 1 week</option><option>1–2 weeks</option>
+            <option>2–4 weeks</option><option>1–3 months</option><option>More than 3 months</option>
+          </select>
+        </div>
+
+        <div>
+          <label style={labelStyle}>Current Symptoms (select all that apply)</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {symptoms.map(s => (
+              <button key={s} type="button" onClick={() => toggleSymptom(s)} style={{
+                padding: '6px 14px', borderRadius: '20px', border: '1.5px solid', cursor: 'pointer', fontSize: '13px',
+                background: form.selectedSymptoms.includes(s) ? 'var(--primary)' : 'white',
+                borderColor: form.selectedSymptoms.includes(s) ? 'var(--primary)' : 'var(--border)',
+                color: form.selectedSymptoms.includes(s) ? 'white' : 'var(--text-dark)',
+                fontWeight: form.selectedSymptoms.includes(s) ? '600' : '400',
+              }}>{s}</button>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Current Medications</label>
-              <input type="text" placeholder="e.g. Metformin, Aspirin"
-                value={form.currentMedications}
-                onChange={e => setForm({...form, currentMedications: e.target.value})}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Allergies</label>
-              <input type="text" placeholder="e.g. Penicillin, Peanuts"
-                value={form.allergies}
-                onChange={e => setForm({...form, allergies: e.target.value})}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-            </div>
-          </div>
-        </section>
+        </div>
 
-        <section className="bg-white rounded-xl border border-gray-100 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Lifestyle</h2>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { label:'Smoking', key:'smokingStatus', opts:['never','former','current'] },
-              { label:'Alcohol', key:'alcoholUsage', opts:['never','occasional','regular'] },
-              { label:'Exercise', key:'exerciseFrequency', opts:['none','moderate','regular'] },
-            ].map(({ label, key, opts }) => (
-              <div key={key}>
-                <label className="block text-sm text-gray-600 mb-1">{label}</label>
-                <select value={form[key]} onChange={e => setForm({...form, [key]: e.target.value})}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                  {opts.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase()+o.slice(1)}</option>)}
-                </select>
-              </div>
-            ))}
-          </div>
-        </section>
+        <div>
+          <label style={labelStyle}>Additional Notes (optional)</label>
+          <textarea value={form.otherNotes} onChange={e => setForm({ ...form, otherNotes: e.target.value })} rows={4}
+            placeholder="Any medications, allergies, or other relevant information..."
+            style={{ ...inputStyle, resize: 'vertical', lineHeight: '1.5' }} />
+        </div>
 
-        <button type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition">
-          Save & Continue to X-Ray Upload →
-        </button>
+        <button type="submit" disabled={loading} style={{
+          background: 'var(--primary)', color: 'white', padding: '13px',
+          border: 'none', borderRadius: '10px', fontWeight: '600', fontSize: '15px',
+          cursor: 'pointer', opacity: loading ? 0.7 : 1
+        }}>{loading ? 'Saving...' : 'Save & Continue to X-Ray Upload →'}</button>
       </form>
     </div>
   );

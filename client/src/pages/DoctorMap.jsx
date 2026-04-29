@@ -1,143 +1,70 @@
 import { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
-import { useSearchParams } from 'react-router-dom';
 
-const SPECIALITY_QUERIES = {
-  respiratory:    'pulmonologist',
-  cardiac:        'cardiologist',
-  neurological:   'neurologist',
-  metabolic:      'endocrinologist diabetologist',
-  oncological:    'oncologist',
-  musculoskeletal:'orthopedic surgeon',
-};
+const SPECIALISTS = [
+  { name: 'Pulmonologist', query: 'pulmonologist near me' },
+  { name: 'Chest Physician', query: 'chest physician near me' },
+  { name: 'Respiratory Clinic', query: 'respiratory clinic near me' },
+  { name: 'TB Specialist', query: 'tuberculosis specialist near me' },
+];
 
 export default function DoctorMap() {
-  const mapRef      = useRef(null);
-  const [doctors, setDoctors]       = useState([]);
-  const [selected, setSelected]     = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [speciality, setSpeciality] = useState('general physician');
+  const mapRef = useRef(null);
+  const [selected, setSelected] = useState(SPECIALISTS[0]);
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
-    const loader = new Loader({
-      apiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
-      libraries: ['places']
-    });
+    if (!window.google) {
+      setStatus('Map loading...');
+      return;
+    }
+    if (!navigator.geolocation) { setStatus('Geolocation not supported.'); return; }
 
-    loader.load().then(google => {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        const map = new google.maps.Map(mapRef.current, {
-          center: { lat, lng },
-          zoom: 13,
-          styles: [{ featureType:'poi.medical', elementType:'geometry', stylers:[{ color:'#e8f4f8' }] }]
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const center = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const map = new window.google.maps.Map(mapRef.current, { center, zoom: 13, mapTypeControl: false });
+      const service = new window.google.maps.places.PlacesService(map);
+
+      service.nearbySearch({ location: center, radius: 5000, keyword: selected.query }, (results, status) => {
+        if (status !== 'OK') { setStatus('No results found nearby.'); return; }
+        setStatus(`Found ${results.length} ${selected.name}(s) nearby`);
+        results.forEach(place => {
+          new window.google.maps.Marker({ position: place.geometry.location, map, title: place.name });
         });
-
-        // User location marker
-        new google.maps.Marker({
-          position: { lat, lng },
-          map,
-          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor:'#3b82f6', fillOpacity:1, strokeColor:'white', strokeWeight:2 },
-          title: 'You are here'
-        });
-
-        // Places search
-        const service = new google.maps.places.PlacesService(map);
-        service.nearbySearch({
-          location: { lat, lng },
-          radius: 5000,
-          keyword: speciality,
-          type: 'doctor'
-        }, (results, status) => {
-          setLoading(false);
-          if (status !== google.maps.places.PlacesServiceStatus.OK) return;
-
-          const infoWindow = new google.maps.InfoWindow();
-          const found = results.slice(0, 10).map(place => {
-            const marker = new google.maps.Marker({
-              position: place.geometry.location,
-              map,
-              title: place.name,
-              icon: { url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' }
-            });
-            marker.addListener('click', () => {
-              setSelected(place);
-              infoWindow.setContent(`
-                <div style="padding:8px;max-width:200px">
-                  <strong>${place.name}</strong><br/>
-                  <small>${place.vicinity}</small><br/>
-                  <small>⭐ ${place.rating || 'N/A'} · ${place.opening_hours?.isOpen?.() ? '🟢 Open' : '🔴 Closed'}</small>
-                </div>
-              `);
-              infoWindow.open(map, marker);
-            });
-            return place;
-          });
-          setDoctors(found);
-        });
-      }, () => setLoading(false));
-    });
-  }, [speciality]);
+      });
+    }, () => setStatus('Could not get your location.'));
+  }, [selected]);
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Find Nearby Doctors</h1>
-      <p className="text-gray-500 mb-6">Based on your diagnosis, find the right specialist near you</p>
+    <div style={{ maxWidth: '960px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+      <h1 style={{ fontFamily: "'DM Serif Display'", fontSize: '1.8rem', color: 'var(--primary-darker)', marginBottom: '0.5rem' }}>Find Nearby Specialists</h1>
+      <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '1.5rem' }}>Locate respiratory specialists and clinics near your current location.</p>
 
-      {/* Speciality Filter */}
-      <div className="flex gap-2 flex-wrap mb-6">
-        {['general physician', ...Object.values(SPECIALITY_QUERIES)].map(s => (
-          <button key={s}
-            onClick={() => setSpeciality(s)}
-            className={`px-3 py-1.5 rounded-full text-sm capitalize border transition ${
-              speciality === s
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'border-gray-200 text-gray-600 hover:border-blue-400'
-            }`}>
-            {s}
-          </button>
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+        {SPECIALISTS.map(s => (
+          <button key={s.name} onClick={() => setSelected(s)} style={{
+            padding: '8px 18px', borderRadius: '20px', border: '1.5px solid', cursor: 'pointer',
+            fontWeight: '500', fontSize: '13px',
+            background: selected.name === s.name ? 'var(--primary)' : 'white',
+            borderColor: selected.name === s.name ? 'var(--primary)' : 'var(--border)',
+            color: selected.name === s.name ? 'white' : 'var(--text-dark)',
+          }}>{s.name}</button>
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        {/* Map */}
-        <div className="col-span-2">
-          <div ref={mapRef} className="w-full h-96 rounded-2xl bg-gray-100 overflow-hidden">
-            {loading && (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                Loading map...
-              </div>
-            )}
-          </div>
-        </div>
+      {status && <div style={{ background: 'var(--primary-light)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: 'var(--primary-dark)', marginBottom: '1rem' }}>{status}</div>}
 
-        {/* Doctor List */}
-        <div className="space-y-3 overflow-y-auto max-h-96">
-          {doctors.length === 0 && !loading && (
-            <p className="text-gray-400 text-sm text-center pt-8">No results found nearby</p>
-          )}
-          {doctors.map((doc, i) => (
-            <div key={i}
-              onClick={() => setSelected(doc)}
-              className={`bg-white rounded-xl border p-3 cursor-pointer transition ${
-                selected?.place_id === doc.place_id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-100 hover:border-blue-300'
-              }`}>
-              <p className="font-medium text-gray-900 text-sm">{doc.name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{doc.vicinity}</p>
-              <div className="flex items-center gap-2 mt-1">
-                {doc.rating && <span className="text-xs text-amber-600">⭐ {doc.rating}</span>}
-                {doc.opening_hours && (
-                  <span className={`text-xs ${doc.opening_hours.isOpen?.() ? 'text-green-600' : 'text-red-500'}`}>
-                    {doc.opening_hours.isOpen?.() ? '● Open' : '● Closed'}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+      <div ref={mapRef} style={{ width: '100%', height: '460px', borderRadius: '14px', border: '1px solid var(--border)', background: '#e5e5e5' }}>
+        {!window.google && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '14px', flexDirection: 'column', gap: '8px' }}>
+            <div>🗺️</div>
+            <div>Add your Google Maps API key to <code>index.html</code> to enable the map.</div>
+          </div>
+        )}
       </div>
+
+      <p style={{ marginTop: '1rem', fontSize: '12px', color: 'var(--text-muted)' }}>
+        Add to <code>index.html</code>: <code>&lt;script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY&libraries=places"&gt;&lt;/script&gt;</code>
+      </p>
     </div>
   );
 }

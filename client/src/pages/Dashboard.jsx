@@ -2,73 +2,94 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
-import { FileText, Upload, Brain, Map } from 'lucide-react';
+
+const quickActions = [
+  { to: '/health-form', label: 'Fill Health Form', icon: '📋', desc: 'Update your symptoms & history' },
+  { to: '/upload', label: 'Upload X-Ray', icon: '🫁', desc: 'Get AI analysis instantly' },
+  { to: '/doctor-map', label: 'Find Doctors', icon: '🗺️', desc: 'Locate nearby specialists' },
+];
+
+const diseases = ['Pneumonia', 'Tuberculosis', 'Asthma', 'COPD'];
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [reports, setReports] = useState([]);
 
   useEffect(() => {
-    api.get(user.role === 'doctor' ? '/report/doctor/pending' : '/report/my')
-      .then(r => setReports(r.data)).catch(() => {});
-  }, [user.role]);
-
-  const quickLinks = [
-    { to:'/health-form', icon: FileText, label:'Update Health Form', color:'bg-blue-50 text-blue-600' },
-    { to:'/xray',        icon: Upload,   label:'Upload X-Ray',        color:'bg-purple-50 text-purple-600' },
-    { to:'/assistant',   icon: Brain,    label:'AI Assistant',         color:'bg-teal-50 text-teal-600' },
-    { to:'/map',         icon: Map,      label:'Find Doctors',         color:'bg-amber-50 text-amber-600' },
-  ];
+    api.get('/report/my').then(r => setReports(r.data || [])).catch(() => {});
+  }, []);
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">
-        Welcome back, {user.name} 👋
-      </h1>
-      <p className="text-gray-500 mb-8 capitalize">{user.role} Dashboard</p>
-
-      <div className="grid grid-cols-4 gap-4 mb-10">
-        {quickLinks.map(({ to, icon: Icon, label, color }) => (
-          <Link key={to} to={to}
-            className="bg-white rounded-xl border border-gray-100 p-4 text-center hover:shadow-md transition">
-            <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center mx-auto mb-2`}>
-              <Icon size={20} />
-            </div>
-            <p className="text-sm font-medium text-gray-700">{label}</p>
-          </Link>
-        ))}
+    <div style={{ maxWidth: '960px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontFamily: "'DM Serif Display'", fontSize: '1.8rem', color: 'var(--primary-darker)' }}>
+          Good morning, {user?.name?.split(' ')[0]} 👋
+        </h1>
+        <p style={{ color: 'var(--text-muted)', marginTop: '4px' }}>Here's your respiratory health overview</p>
       </div>
 
-      <h2 className="font-semibold text-gray-800 mb-4">
-        {user.role === 'doctor' ? 'Pending Patient Reports' : 'Your Reports'}
-      </h2>
-      <div className="space-y-3">
-        {reports.length === 0 && (
-          <div className="bg-gray-50 rounded-xl p-8 text-center text-gray-400">
-            {user.role === 'doctor' ? 'No pending reports' : 'No reports yet. Upload your first X-ray!'}
+      {/* Stats row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+        {[
+          { label: 'Total Scans', value: reports.length },
+          { label: 'Diseases Tracked', value: 4 },
+          { label: 'Last Scan', value: reports[0]?.createdAt ? new Date(reports[0].createdAt).toLocaleDateString() : '—' },
+        ].map(s => (
+          <div key={s.label} style={{ background: 'var(--primary-light)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem' }}>
+            <div style={{ fontSize: '12px', color: 'var(--primary-dark)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: '700', color: 'var(--primary-darker)', marginTop: '4px' }}>{s.value}</div>
           </div>
-        )}
-        {reports.map(r => (
-          <Link key={r._id} to={`/report/${r._id}`}
-            className="flex items-center justify-between bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition">
-            <div>
-              {user.role === 'doctor' && <p className="text-xs text-gray-500 mb-0.5">Patient: {r.patient?.name}</p>}
-              <p className="font-medium text-gray-900">
-                {r.predictedDiseases?.[0]?.name || 'Analysis'} {r.predictedDiseases?.length > 1 ? `+${r.predictedDiseases.length-1} more` : ''}
-              </p>
-              <p className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleDateString()}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className={`text-lg font-bold ${
-                r.riskScore < 30 ? 'text-green-600' : r.riskScore < 60 ? 'text-amber-600' : 'text-red-600'
-              }`}>{r.riskScore}</div>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                r.status === 'reviewed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-              }`}>{r.status}</span>
-            </div>
+        ))}
+      </div>
+
+      {/* Quick actions */}
+      <h2 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--primary-darker)', marginBottom: '1rem' }}>Quick Actions</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
+        {quickActions.map(a => (
+          <Link key={a.to} to={a.to} style={{
+            background: 'white', border: '1px solid var(--border)', borderRadius: '12px',
+            padding: '1.25rem', textDecoration: 'none', display: 'block',
+            transition: 'border-color 0.2s, transform 0.15s'
+          }}>
+            <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>{a.icon}</div>
+            <div style={{ fontWeight: '600', color: 'var(--primary-darker)', fontSize: '14px' }}>{a.label}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{a.desc}</div>
           </Link>
         ))}
       </div>
+
+      {/* Disease scope */}
+      <h2 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--primary-darker)', marginBottom: '1rem' }}>Diseases We Detect</h2>
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
+        {diseases.map(d => (
+          <span key={d} style={{ background: 'var(--primary)', color: 'white', padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: '500' }}>{d}</span>
+        ))}
+      </div>
+
+      {/* Recent reports */}
+      <h2 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--primary-darker)', marginBottom: '1rem' }}>Recent Reports</h2>
+      {reports.length === 0 ? (
+        <div style={{ background: 'white', border: '1px dashed var(--border)', borderRadius: '12px', padding: '2.5rem', textAlign: 'center' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>No reports yet. Upload an X-ray to get started.</p>
+          <Link to="/upload" style={{ display: 'inline-block', marginTop: '1rem', background: 'var(--primary)', color: 'white', padding: '10px 24px', borderRadius: '8px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>Upload X-Ray</Link>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {reports.slice(0, 5).map(r => (
+            <Link key={r._id} to={`/report/${r._id}`} style={{
+              background: 'white', border: '1px solid var(--border)', borderRadius: '10px',
+              padding: '1rem 1.25rem', textDecoration: 'none', display: 'flex',
+              justifyContent: 'space-between', alignItems: 'center'
+            }}>
+              <div>
+                <div style={{ fontWeight: '600', color: 'var(--primary-darker)', fontSize: '14px' }}>{r.disease || 'Respiratory Scan'}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{new Date(r.createdAt).toLocaleDateString()}</div>
+              </div>
+              <span style={{ background: 'var(--primary-light)', color: 'var(--primary-dark)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>View →</span>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

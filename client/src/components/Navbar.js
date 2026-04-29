@@ -1,53 +1,69 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Activity, LogOut } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => { logout(); navigate('/'); };
 
-  const navLinks = user ? [
-    { to: '/dashboard',   label: 'Dashboard' },
+  const navLinks = [
+    { to: '/dashboard', label: 'Dashboard' },
     { to: '/health-form', label: 'Health Form' },
-    { to: '/xray',        label: 'X-Ray' },
-    { to: '/assistant',   label: 'AI Chat' },
-    { to: '/knowledge',   label: 'Knowledge' },
-    { to: '/map',         label: 'Find Doctor' },
-  ] : [];
+    { to: '/upload', label: 'X-Ray Upload' },
+    { to: '/doctor-map', label: 'Find Doctors' },
+  ];
 
   return (
-    <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-bold text-blue-600">
-          <Activity size={20} /> MediScan AI
-        </Link>
+    <nav style={{
+      background: 'var(--primary-darker)', color: 'white',
+      padding: '0 2rem', display: 'flex', alignItems: 'center',
+      justifyContent: 'space-between', height: '60px',
+      position: 'sticky', top: 0, zIndex: 100,
+      boxShadow: '0 2px 12px rgba(4,52,44,0.3)'
+    }}>
+      <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'white' }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M2 12 Q6 4 10 12 Q14 20 18 12 Q20 8 22 12" stroke="#9FE1CB" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+        </svg>
+        <span style={{ fontFamily: "'DM Serif Display'", fontSize: '20px', letterSpacing: '-0.3px' }}>MediScan AI</span>
+      </Link>
 
-        <div className="flex items-center gap-1">
-          {navLinks.map(({ to, label }) => (
-            <Link key={to} to={to}
-              className="text-sm text-gray-600 hover:text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition">
-              {label}
-            </Link>
+      {user && (
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+          {navLinks.map(l => (
+            <Link key={l.to} to={l.to} style={{
+              color: location.pathname === l.to ? '#9FE1CB' : 'rgba(255,255,255,0.75)',
+              textDecoration: 'none', padding: '6px 12px', borderRadius: '6px',
+              fontSize: '13px', fontWeight: '500',
+              background: location.pathname === l.to ? 'rgba(159,225,203,0.15)' : 'transparent',
+              transition: 'all 0.2s'
+            }}>{l.label}</Link>
           ))}
-          {user ? (
-            <div className="flex items-center gap-3 ml-3 pl-3 border-l border-gray-100">
-              <span className="text-sm text-gray-600 font-medium">{user.name}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                user.role === 'doctor' ? 'bg-teal-100 text-teal-700' : 'bg-blue-100 text-blue-700'
-              }`}>{user.role}</span>
-              <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition">
-                <LogOut size={16} />
-              </button>
-            </div>
-          ) : (
-            <div className="flex gap-2 ml-3">
-              <Link to="/login" className="text-sm text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition">Sign In</Link>
-              <Link to="/register" className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">Register</Link>
-            </div>
-          )}
         </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {user ? (
+          <>
+            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>Hi, {user.name?.split(' ')[0]}</span>
+            <button onClick={handleLogout} style={{
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.3)',
+              color: 'white', padding: '6px 16px', borderRadius: '6px',
+              cursor: 'pointer', fontSize: '13px', fontWeight: '500'
+            }}>Sign Out</button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '14px' }}>Sign In</Link>
+            <Link to="/register" style={{
+              background: 'var(--primary-mid)', color: 'var(--text-dark)',
+              padding: '7px 18px', borderRadius: '8px', textDecoration: 'none',
+              fontSize: '14px', fontWeight: '600'
+            }}>Register</Link>
+          </>
+        )}
       </div>
     </nav>
   );

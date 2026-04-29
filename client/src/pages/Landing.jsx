@@ -1,75 +1,77 @@
 import { Link } from 'react-router-dom';
-import { Activity, Brain, Map, Users, Shield, FileText } from 'lucide-react';
+
+const diseases = ['Pneumonia', 'Tuberculosis (TB)', 'Asthma', 'COPD'];
 
 const features = [
-  { icon: Activity,  title: 'X-Ray Analysis',     desc: 'AI-powered CNN analysis detects anomalies in chest X-rays and scans with radiologist-level accuracy.' },
-  { icon: Brain,     title: 'Disease Prediction', desc: 'Predict risk of respiratory, cardiac, neurological, metabolic and oncological conditions.' },
-  { icon: FileText,  title: 'Smart Reports',       desc: 'Auto-generated medical reports with findings, risk scores and doctor-reviewable notes.' },
-  { icon: Users,     title: 'Community Hub',       desc: 'Connect with others facing the same diagnosis. Share, learn, and fight together.' },
-  { icon: Map,       title: 'Find Doctors',        desc: 'Locate specialists near you based on your diagnosis using real-time Google Maps.' },
-  { icon: Shield,    title: 'AI Assistant',        desc: 'Chat with our medical AI to understand your report and get health guidance anytime.' },
+  { icon: '🫁', title: 'X-Ray Analysis', desc: 'Upload chest X-rays for instant AI-powered respiratory disease detection.' },
+  { icon: '📋', title: 'Detailed Reports', desc: 'Get structured reports with risk scores, findings, and next steps.' },
+  { icon: '🗺️', title: 'Find Specialists', desc: 'Locate pulmonologists and respiratory clinics near you instantly.' },
+  { icon: '🔒', title: 'Secure & Private', desc: 'Your health data is encrypted and never shared without consent.' },
 ];
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50">
-      <div className="max-w-6xl mx-auto px-6 pt-24 pb-16 text-center">
-        <span className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-4 py-1 rounded-full mb-4">
-          AI-Powered Healthcare
-        </span>
-        <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-          Diagnose Smarter.<br />
-          <span className="text-blue-600">Live Healthier.</span>
-        </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
-          MediScan AI analyzes your X-rays and medical history to detect diseases early,
-          generate detailed reports, and connect you with the right specialists.
-        </p>
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Link to="/register"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition">
-            Get Started Free
-          </Link>
-          <Link to="/login"
-            className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-lg font-semibold transition">
-            Sign In
-          </Link>
-        </div>
-      </div>
+    <div>
+      {/* Hero */}
+      <section style={{
+        background: 'linear-gradient(160deg, var(--primary-light) 0%, #d0f0e6 100%)',
+        padding: '5rem 2rem', textAlign: 'center'
+      }}>
+        <div style={{
+          display: 'inline-block', background: 'var(--accent)', color: 'var(--primary-darker)',
+          padding: '6px 20px', borderRadius: '20px', fontSize: '13px',
+          fontWeight: '600', marginBottom: '1.5rem', letterSpacing: '0.3px'
+        }}>AI-Powered Respiratory Healthcare</div>
 
-      <div className="bg-blue-600 py-4">
-        <div className="flex gap-8 whitespace-nowrap px-8 text-white/80 text-sm justify-center">
-          {['Respiratory', 'Cardiovascular', 'Neurological', 'Metabolic', 'Oncological', 'Musculoskeletal'].map(c => (
-            <span key={c} className="font-medium">• {c}</span>
+        <h1 style={{
+          fontFamily: "'DM Serif Display'", fontSize: 'clamp(2.5rem, 6vw, 4rem)',
+          color: 'var(--primary-darker)', lineHeight: '1.1', marginBottom: '1rem'
+        }}>Diagnose Smarter.<br /><span style={{ color: 'var(--primary)' }}>Live Healthier.</span></h1>
+
+        <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', maxWidth: '560px', margin: '0 auto 2.5rem', lineHeight: '1.7' }}>
+          MediScan AI analyzes your chest X-rays and medical history to detect respiratory diseases early, generate detailed reports, and connect you with the right specialists.
+        </p>
+
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link to="/register" style={{
+            background: 'var(--primary)', color: 'white', padding: '14px 32px',
+            borderRadius: '10px', textDecoration: 'none', fontWeight: '600', fontSize: '1rem'
+          }}>Get Started Free</Link>
+          <Link to="/login" style={{
+            background: 'white', color: 'var(--primary)', padding: '14px 32px',
+            borderRadius: '10px', textDecoration: 'none', fontWeight: '600', fontSize: '1rem',
+            border: '1.5px solid var(--border)'
+          }}>Sign In</Link>
+        </div>
+      </section>
+
+      {/* Disease ticker */}
+      <section style={{ background: 'var(--primary)', padding: '1rem 2rem' }}>
+        <div style={{ display: 'flex', gap: '3rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {diseases.map(d => (
+            <span key={d} style={{ color: 'white', fontWeight: '500', fontSize: '14px' }}>• {d}</span>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-6xl mx-auto px-6 py-20">
-        <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+      {/* Features */}
+      <section style={{ padding: '5rem 2rem', maxWidth: '900px', margin: '0 auto' }}>
+        <h2 style={{ fontFamily: "'DM Serif Display'", fontSize: '2rem', textAlign: 'center', color: 'var(--primary-darker)', marginBottom: '3rem' }}>
           Everything you need for smarter healthcare
         </h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {features.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                <Icon className="text-blue-600" size={24} />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{title}</h3>
-              <p className="text-gray-600 text-sm">{desc}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+          {features.map(f => (
+            <div key={f.title} style={{
+              background: 'white', border: '1px solid var(--border)', borderRadius: '14px',
+              padding: '1.5rem', transition: 'transform 0.2s, box-shadow 0.2s'
+            }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{f.icon}</div>
+              <h3 style={{ fontWeight: '600', color: 'var(--primary-darker)', marginBottom: '0.5rem' }}>{f.title}</h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: '1.6' }}>{f.desc}</p>
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="bg-gradient-to-r from-blue-600 to-teal-600 py-16 text-center text-white">
-        <h2 className="text-3xl font-bold mb-4">Ready to take control of your health?</h2>
-        <p className="text-blue-100 mb-8">Join thousands already using MediScan AI</p>
-        <Link to="/register"
-          className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
-          Create Free Account
-        </Link>
-      </div>
+      </section>
     </div>
   );
 }
